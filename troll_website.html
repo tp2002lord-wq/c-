@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Xin chúc mừng — Bạn được tặng quà!</title>
+  <style>
+    /* TÙY CHỈNH: sửa text ở phần #headline và #linkText */
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#ffb86b}
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#071029 0%,var(--bg) 100%);display:flex;align-items:center;justify-content:center;color:#e6eef8}
+    .card{width:920px;max-width:95%;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:16px;padding:28px;box-shadow:0 10px 30px rgba(2,6,23,0.6);display:grid;grid-template-columns:1fr 380px;gap:20px}
+    .left{padding:10px}
+    h1{margin:0 0 12px;font-size:28px;letter-spacing:-0.3px}
+    p{margin:0 0 18px;color:#b7c6da}
+    .big-link{display:inline-block;background:linear-gradient(90deg,var(--accent),#ffd57a);padding:14px 22px;border-radius:12px;color:#081226;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 6px 18px rgba(255,184,107,0.18)}
+    .small{font-size:13px;color:#98a9c4}
+    .meta{margin-top:12px}
+    .right{display:flex;align-items:center;justify-content:center}
+    .card-illustration{width:320px;height:240px;border-radius:12px;background:linear-gradient(135deg,#0b2a52,#071f3a);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px}
+    .fake-code{font-family:monospace;background:rgba(255,255,255,0.03);padding:10px;border-radius:8px;font-size:14px}
+    footer{grid-column:1/-1;margin-top:12px;font-size:13px;color:#7f95b4}
+    /* Confetti canvas */
+    #confetti{position:fixed;pointer-events:none;left:0;top:0;width:100%;height:100%;z-index:999}
+    /* Modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(0deg,rgba(0,0,0,0.45),rgba(0,0,0,0.45));z-index:1000}
+    .modal .box{background:#071026;padding:28px;border-radius:14px;max-width:560px;width:92%;text-align:center}
+    .modal h2{margin:0 0 8px}
+    .btn{display:inline-block;padding:10px 16px;border-radius:10px;background:#0ea5a4;color:#021018;text-decoration:none;font-weight:700;cursor:pointer}
+    .ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#e6eef8}
+  </style>
+</head>
+<body>
+  <canvas id="confetti"></canvas>
+  <div class="card">
+    <div class="left">
+      <h1 id="headline">🎉 Chúc mừng! Bạn may mắn được nhận QUÀ</h1>
+      <p id="subtitle">Nhấn nút bên dưới để nhận mã quà tặng/ngẫu nhiên — chỉ dành cho 1 người duy nhất mỗi ngày.</p>
+
+      <!-- THIS IS THE TROLL LINK: change # to customize the visible text -->
+      <a id="trollLink" class="big-link" href="#">NHẤN VÀO ĐÂY ĐỂ NHẬN</a>
+
+      <div class="meta small">
+        <div>Người gửi: <strong>BQT_Ấn_Tượng</strong> • Hạn dùng: <strong>24 giờ</strong></div>
+        <div style="margin-top:8px">Mã hiển thị (giả): <span class="fake-code">ABCD-1234-XY</span></div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="card-illustration">
+        <svg width="140" height="140" viewBox="0 0 24 24" fill="none" aria-hidden>
+          <path d="M12 2l3 6 6 .5-4.5 3 1 6L12 15l-5.5 2.5 1-6L3 8.5 9 8l3-6z" fill="#ffd57a" />
+        </svg>
+        <div style="text-align:center">
+          <div style="font-weight:700">QUÀ NGẪU NHIÊN</div>
+          <div class="small">(Ảnh minh họa)</div>
+        </div>
+      </div>
+    </div>
+
+    <footer>⚠️ LƯU Ý: Đây là trò đùa. Không nhập thông tin cá nhân. Đừng dùng để lừa người khác vào trang đăng nhập thật.</footer>
+  </div>
+
+  <!-- Modal content shown after clicking the troll link -->
+  <div id="modal" class="modal" role="dialog" aria-hidden="true">
+    <div class="box">
+      <h2 id="modalTitle">Đang kiểm tra vận may...</h2>
+      <p id="modalMsg">Vui lòng đợi trong giây lát...</p>
+      <div style="margin-top:16px">
+        <a id="okBtn" class="btn ghost" href="#">OK</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ---- TÙY CHỈNH NHANH ----
+    // Thay đổi text hiển thị nếu muốn
+    document.getElementById('headline').textContent = '🎉 Bạn trúng thưởng — Click để nhận!';
+    document.getElementById('trollLink').textContent = 'NHẤN VÀO ĐÂY ĐỂ NHẬN QUÀ';
+    // -------------------------
+
+    // Confetti minimal implementation (no external libs)
+    (function(){
+      const canvas = document.getElementById('confetti');
+      const ctx = canvas.getContext('2d');
+      let W = canvas.width = innerWidth;
+      let H = canvas.height = innerHeight;
+      window.addEventListener('resize', ()=>{W=canvas.width=innerWidth;H=canvas.height=innerHeight});
+      const rand = (a,b)=>Math.random()*(b-a)+a;
+      class Piece{constructor(){this.x=rand(0,W);this.y=rand(-H,0);this.w=rand(6,12);this.h=rand(8,18);this.vx=rand(-2,2);this.vy=rand(2,7);this.color=['#ffd57a','#ff8aa1','#9be7ff','#b4f8c8'][Math.floor(Math.random()*4)];}
+        update(){this.x+=this.vx;this.y+=this.vy; if(this.y>H){this.y=-10;this.x=rand(0,W)}}
+        draw(){ctx.fillStyle=this.color;ctx.fillRect(this.x,this.y,this.w,this.h)}
+      }
+      let pieces=[];
+      function startConfetti(){pieces=[];for(let i=0;i<160;i++)pieces.push(new Piece());run=true;}
+      let run=false;
+      function loop(){ctx.clearRect(0,0,W,H);if(run){for(let p of pieces){p.update();p.draw();}}requestAnimationFrame(loop)}
+      loop();
+      // expose
+      window._startConfetti = startConfetti;
+      window._stopConfetti = ()=>{run=false;ctx.clearRect(0,0,W,H)};
+    })();
+
+    // Modal + prank behaviour
+    const link = document.getElementById('trollLink');
+    const modal = document.getElementById('modal');
+    const okBtn = document.getElementById('okBtn');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMsg = document.getElementById('modalMsg');
+
+    link.addEventListener('click', (e)=>{
+      e.preventDefault();
+      modal.style.display='flex';
+      modal.setAttribute('aria-hidden','false');
+      modalTitle.textContent='Đang kiểm tra...';
+      modalMsg.textContent='Hệ thống đang xác minh phần thưởng của bạn';
+      // fake waiting sequence then reveal
+      setTimeout(()=>{modalTitle.textContent='Tuyệt vời! Bạn được chọn.';modalMsg.textContent='Nhấn "OK" để nhận quà';},1200);
+      setTimeout(()=>{window._startConfetti();modalTitle.textContent='TROLLED 🎊';modalMsg.textContent='Haha! Đây chỉ là trò đùa. Share cho bạn bè nếu muốn.';okBtn.classList.remove('ghost');},3000);
+    });
+
+    okBtn.addEventListener('click',(e)=>{
+      e.preventDefault();
+      // Close modal and stop confetti after a while
+      modal.style.display='none';
+      modal.setAttribute('aria-hidden','true');
+      setTimeout(()=>window._stopConfetti(),1200);
+    });
+
+    // Optional: keyboard "Esc" to close
+    document.addEventListener('keydown',(e)=>{if(e.key==='Escape'){modal.style.display='none';modal.setAttribute('aria-hidden','true');window._stopConfetti();}});
+
+  </script>
+</body>
+</html>
